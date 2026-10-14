@@ -1,0 +1,175 @@
+name: Python Application CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov flake8 black isort
+    
+    - name: Lint with flake8
+      run: |
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      continue-on-error: true
+    
+    - name: Check code formatting with black
+      run: |
+        black --check app.py utils/ pages/ || true
+      continue-on-error: true
+    
+    - name: Check import sorting with isort
+      run: |
+        isort --check-only app.py utils/ pages/ || true
+      continue-on-error: true
+    
+    - name: Verify project structure
+      run: |
+        python -c "
+        import os
+        import sys
+        
+        required_files = ['app.py', 'requirements.txt']
+        required_dirs = ['utils', 'pages', 'Model outputs']
+        
+        missing = []
+        for f in required_files:
+            if not os.path.exists(f):
+                missing.append(f)
+        
+        for d in required_dirs:
+            if not os.path.isdir(d):
+                missing.append(d + '/')
+        
+        if missing:
+            print(f'Missing files/directories: {missing}')
+            sys.exit(1)
+        else:
+            print('All required files and directories present')
+        "
+    
+    - name: Test imports
+      run: |
+        python -c "import streamlit"
+        python -c "import pandas"
+        python -c "import numpy"
+        python -c "import sklearn"
+        python -c "import xgboost"
+        python -c "import psutil"
+        python -c "import matplotlib"
+        echo "All critical imports successful"
+    
+    - name: Run application smoke test
+      run: |
+        python -c "
+        import sys
+        sys.path.insert(0, '.')
+        
+        # Test utility imports
+        try:
+            from utils import state, styles, auth
+            print('✓ Utility modules imported successfully')
+        except Exception as e:
+            print(f'✗ Failed to import utilities: {e}')
+            sys.exit(1)
+        
+        # Test model loader
+        try:
+            from utils.model_loader import MODEL_META
+            print(f'✓ Model metadata loaded: {len(MODEL_META)} models')
+        except Exception as e:
+            print(f'✗ Failed to load model metadata: {e}')
+            sys.exit(1)
+        
+        print('✓ All smoke tests passed')
+        "
+
+  security:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install safety bandit
+    
+    - name: Check for security vulnerabilities in dependencies
+      run: |
+        pip install -r requirements.txt
+        safety check || true
+      continue-on-error: true
+    
+    - name: Run security linter (Bandit)
+      run: |
+        bandit -r app.py utils/ pages/ -f json -o bandit-report.json || true
+      continue-on-error: true
+    
+    - name: Upload Bandit report
+      uses: actions/upload-artifact@v3
+      with:
+        name: bandit-security-report
+        path: bandit-report.json
+      if: always()
+
+  docs:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Check documentation files
+      run: |
+        required_docs=("README.md" "CONTRIBUTING.md" "LICENSE")
+        for doc in "${required_docs[@]}"; do
+          if [ ! -f "$doc" ]; then
+            echo "Missing: $doc"
+            exit 1
+          else
+            echo "✓ Found: $doc"
+          fi
+        done
+    
+    - name: Validate Markdown
+      uses: docker://avtodev/markdown-lint:v1
+      with:
+        args: '*.md'
+      continue-on-error: true

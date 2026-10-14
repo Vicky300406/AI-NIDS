@@ -1,0 +1,130 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+nids_users.db
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Node.js / React Frontend
+node_modules/
+.pnp
+.pnp.js
+coverage/
+build/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+dist/
+dist-ssr/
+*.local
+
+# React specific
+nids-react/node_modules/
+nids-react/dist/
+nids-react/.env.local
+
+# FastAPI Backend
+sentinelx/backend/.env
+sentinelx/backend/__pycache__/
+sentinelx/backend/**/__pycache__/
+sentinelx/backend/nids.db
+sentinelx/backend/nids_users.db
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# OS specific
+Thumbs.db
+Desktop.ini
+
+# Installation marker
+.installed
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Test databases
+test_*.db
+
+# Editor directories
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Parcel cache
+.parcel-cache
+
+# Next.js
+.next/
+out/
+
+# Nuxt.js
+.nuxt
